@@ -7,3 +7,8 @@ updates:
     target-branch: "dev"
     labels:
       - "pip dependencies"
+    ignore:
+      # Ignore updates to packages that start with 'aws'
+      # Wildcards match zero or more arbitrary characters
+      - dependency-name: "torch"
+      - dependency-name: "torch_geometric"
