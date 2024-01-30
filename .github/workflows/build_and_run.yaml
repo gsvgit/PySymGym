@@ -1,0 +1,29 @@
+name: Build and Launch C# Project
+
+on: [pull_request]
+
+jobs:
+  build-and-launch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: GameServers/VSharp
+
+      - name: Install dependencies
+        working-directory: ./GameServers/VSharp
+        run: |
+          pwd
+          ls
+          dotnet build ./VSharp.ML.GameServer.Runner/VSharp.ML.GameServer.Runner.csproj  -c Release
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: runner
+          path: ./GameServers/VSharp/VSharp.ML.GameServer.Runner/bin/Debug/net7.0
+
+      - name: Launch application
+        run: |
+          python3 -h
+        #   dotnet launch
