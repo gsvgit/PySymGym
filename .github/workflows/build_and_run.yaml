@@ -9,19 +9,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: GameServers/VSharp
+          submodules: true
 
       - name: Install dependencies
-        working-directory: ./GameServers/VSharp
+        working-directory: ./GameServers/VSharp/
         run: |
           pwd
+          echo "one"
           ls
-          dotnet build ./VSharp.ML.GameServer.Runner/VSharp.ML.GameServer.Runner.csproj  -c Release
+          echo "two"
+          ls VSharp.ML.GameServer.Runner/
+          echo "build"
+          dotnet build VSharp.ML.GameServer.Runner -c Release
 
       - uses: actions/upload-artifact@v3
         with:
           name: runner
-          path: ./GameServers/VSharp/VSharp.ML.GameServer.Runner/bin/Debug/net7.0
+          path: ./GameServers/VSharp/VSharp.ML.GameServer.Runner/bin/Release/net7.0
 
       - name: Launch application
         run: |

@@ -7,22 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\advanced-algorithms\src\Advanced.Algorithms\Advanced.Algorithms.csproj" />
-      <ProjectReference Include="..\BizHawk\ExternalCoreProjects\Virtu\Virtu.csproj" />
-      <ProjectReference Include="..\BizHawk\src\BizHawk.BizInvoke\BizHawk.BizInvoke.csproj" />
-      <ProjectReference Include="..\BizHawk\src\BizHawk.Common\BizHawk.Common.csproj" />
-      <ProjectReference Include="..\BizHawk\src\BizHawk.Emulation.Common\BizHawk.Emulation.Common.csproj" />
-      <ProjectReference Include="..\BizHawk\src\BizHawk.Emulation.Cores\BizHawk.Emulation.Cores.csproj" />
-      <ProjectReference Include="..\BizHawk\src\BizHawk.Emulation.DiscSystem\BizHawk.Emulation.DiscSystem.csproj" />
-      <ProjectReference Include="..\C-Sharp-Algorithms\Algorithms\Algorithms.csproj" />
-      <ProjectReference Include="..\C-Sharp-Algorithms\DataStructures\DataStructures.csproj" />
-      <ProjectReference Include="..\LiteDB\LiteDB.Shell\LiteDB.Shell.csproj" />
-      <ProjectReference Include="..\LiteDB\LiteDB\LiteDB.csproj" />
       <ProjectReference Include="..\ManuallyCollected\ManuallyCollected.csproj" />
-      <ProjectReference Include="..\rd\rd-net\Lifetimes\Lifetimes.csproj" />
-      <ProjectReference Include="..\rd\rd-net\RdFramework.Reflection\RdFramework.Reflection.csproj" />
-      <ProjectReference Include="..\rd\rd-net\RdFramework\RdFramework.csproj" />
-      <ProjectReference Include="..\StandaloneUnity\Unity\Unity.csproj" />
     </ItemGroup>
 
 </Project>
