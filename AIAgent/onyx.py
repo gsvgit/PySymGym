@@ -61,27 +61,27 @@ def load_gamestate(f: t.TextIO) -> HeteroData:
 
 
 def create_model_input(
-    hetero_data: HeteroData, modifyer: t.Callable[[t.Any], t.Any] = lambda x: x
+    hetero_data: HeteroData, modifier: t.Callable[[t.Any], t.Any] = lambda x: x
 ):
     return {
-        ONNX.game_vertex: modifyer(hetero_data[TORCH.game_vertex].x),
-        ONNX.state_vertex: modifyer(hetero_data[TORCH.state_vertex].x),
-        ONNX.gamevertex_to_gamevertex_index: modifyer(
+        ONNX.game_vertex: modifier(hetero_data[TORCH.game_vertex].x),
+        ONNX.state_vertex: modifier(hetero_data[TORCH.state_vertex].x),
+        ONNX.gamevertex_to_gamevertex_index: modifier(
             hetero_data[TORCH.gamevertex_to_gamevertex].edge_index
         ),
-        ONNX.gamevertex_to_gamevertex_type: modifyer(
+        ONNX.gamevertex_to_gamevertex_type: modifier(
             hetero_data[TORCH.gamevertex_to_gamevertex].edge_type
         ),
-        ONNX.gamevertex_history_statevertex_index: modifyer(
+        ONNX.gamevertex_history_statevertex_index: modifier(
             hetero_data[TORCH.gamevertex_history_statevertex].edge_index
         ),
-        ONNX.gamevertex_history_statevertex_attrs: modifyer(
+        ONNX.gamevertex_history_statevertex_attrs: modifier(
             hetero_data[TORCH.gamevertex_history_statevertex].edge_attr
         ),
-        ONNX.gamevertex_in_statevertex: modifyer(
+        ONNX.gamevertex_in_statevertex: modifier(
             hetero_data[TORCH.gamevertex_in_statevertex].edge_index
         ),
-        ONNX.statevertex_parentof_statevertex: modifyer(
+        ONNX.statevertex_parentof_statevertex: modifier(
             hetero_data[TORCH.statevertex_parentof_statevertex].edge_index
         ),
     }
