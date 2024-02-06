@@ -11,21 +11,20 @@ jobs:
         with:
           submodules: true
 
-      - name: Install dependencies
+      - name: Build V# game server
         working-directory: ./GameServers/VSharp/
         run: |
-          pwd
-          echo "one"
-          ls
-          echo "two"
-          ls VSharp.ML.GameServer.Runner/
-          echo "build"
           dotnet build VSharp.ML.GameServer.Runner -c Release
 
-      - uses: actions/upload-artifact@v3
-        with:
-          name: runner
-          path: ./GameServers/VSharp/VSharp.ML.GameServer.Runner/bin/Release/net7.0
+      - name: Build .NET game maps
+        working-directory: ./maps/DotNet/Maps
+        run: |
+          dotnet build Root -c Release
+
+      - name: Generate initial data for training
+        working-directory: ./GameServers/VSharp/VSharp.ML.GameServer.Runner/bin/Release/net7.0
+        run: |
+          dotnet VSharp.ML.GameServer.Runner.dll --mode generator --datasetbasepath ../../../../../../maps/DotNet/Maps/Root/bin/Release/net7.0 --datasetdescription ../../../../../../maps/DotNet/Maps/dataset_for_tests.json --stepstoserialize 200
 
       - name: Launch application
         run: |
