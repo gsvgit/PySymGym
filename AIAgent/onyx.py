@@ -17,8 +17,8 @@ from ml.models.RGCNEdgeTypeTAG3VerticesDoubleHistory2.model_modified import (
 
 
 class TORCH:
-    game_vertex = "game_vertex"  # game_x
-    state_vertex = "state_vertex"  # state_x
+    game_vertex = "game_vertex"
+    state_vertex = "state_vertex"
     gamevertex_to_gamevertex = (
         "game_vertex",
         "to",
@@ -33,7 +33,7 @@ class TORCH:
         "game_vertex",
         "in",
         "state_vertex",
-    )  # edge_index_in_v_s
+    )
     statevertex_parentof_statevertex = (
         "state_vertex",
         "parent_of",
@@ -117,8 +117,6 @@ def save_in_onnx(
             ONNX.gamevertex_history_statevertex_attrs: [0, 1],
             ONNX.gamevertex_in_statevertex: [1],
             ONNX.statevertex_parentof_statevertex: [1],
-            # "out": [0, 1, 2, 3, 4, 5, 6, 7],
-            # "out": [0],
         },
         input_names=[
             ONNX.game_vertex,
