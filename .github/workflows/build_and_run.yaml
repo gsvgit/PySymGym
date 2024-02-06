@@ -1,0 +1,32 @@
+name: Build and Launch C# Project
+
+on: [pull_request]
+
+jobs:
+  build-and-launch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Build V# game server
+        working-directory: ./GameServers/VSharp/
+        run: |
+          dotnet build VSharp.ML.GameServer.Runner -c Release
+
+      - name: Build .NET game maps
+        working-directory: ./maps/DotNet/Maps
+        run: |
+          dotnet build Root -c Release
+
+      - name: Generate initial data for training
+        working-directory: ./GameServers/VSharp/VSharp.ML.GameServer.Runner/bin/Release/net7.0
+        run: |
+          dotnet VSharp.ML.GameServer.Runner.dll --mode generator --datasetbasepath ../../../../../../maps/DotNet/Maps/Root/bin/Release/net7.0 --datasetdescription ../../../../../../maps/DotNet/Maps/dataset_for_tests.json --stepstoserialize 200
+
+      - name: Launch application
+        run: |
+          python3 -h
+        #   dotnet launch
