@@ -20,6 +20,12 @@ class ServerInstanceInfo:
     pid: int | Undefined
 
 
+class StaleServerInstanceInfo(ServerInstanceInfo): ...
+
+
+class RunningServerInstanceInfo(ServerInstanceInfo): ...
+
+
 def custom_encoder_if_disable_message_checks() -> Callable | None:
     return asdict if FeatureConfig.DISABLE_MESSAGE_CHECKS else None
 
