@@ -47,7 +47,6 @@ BEST_MODEL_ONNX_SAVE_PATH = Path("ml/onnx/StateModelEncoder.onnx")
 TEMP_EPOCH_INFERENCE_TIMES_DIR = Path(".epoch_inference_times/")
 BASE_NN_OUT_FEATURES_NUM = 8
 
-# assuming we start from /VSharp/VSharp.ML.AIAgent
 SERVER_WORKING_DIR = Path(
-    "GameServers/VSharp/VSharp.ML.GameServer.Runner/bin/Debug/net7.0"
+    "../GameServers/VSharp/VSharp.ML.GameServer.Runner/bin/Release/net7.0"
 ).absolute()

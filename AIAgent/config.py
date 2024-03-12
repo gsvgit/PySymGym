@@ -22,11 +22,7 @@ class GeneralConfig:
 
 
 class BrokerConfig:
-    BROKER_PORT = 8080
-
-
-class ServerConfig:
-    VSHARP_INSTANCES_START_PORT = 8100
+    BROKER_PORT = 35000
 
 
 @dataclass(slots=True, frozen=True)
