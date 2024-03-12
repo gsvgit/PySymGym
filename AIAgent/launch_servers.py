@@ -1,18 +1,19 @@
-import argparse
+import asyncio
 import json
 import logging
 import os
 import signal
+import socket
 import subprocess
 import time
 from contextlib import contextmanager
-from pathlib import Path
 from queue import Empty, Queue
 
 import psutil
 from aiohttp import web
+
 from common.constants import SERVER_WORKING_DIR
-from config import BrokerConfig, FeatureConfig, GeneralConfig, ServerConfig
+from config import BrokerConfig, FeatureConfig, GeneralConfig
 from connection.broker_conn.classes import ServerInstanceInfo, Undefined, WSUrl
 
 routes = web.RouteTableDef()
@@ -23,15 +24,29 @@ logging.basicConfig(
     format="%(asctime)s - p%(process)d: %(name)s - [%(levelname)s]: %(message)s",
 )
 
+FAILED_TO_INSTANTIATE_ERROR = "TCP server failed"
+avoid_same_free_port_lock = asyncio.Lock()
+
+
+def next_free_port(min_port=35001, max_port=36000):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    while min_port <= max_port:
+        try:
+            sock.bind(("", min_port))
+            sock.close()
+            return min_port
+        except OSError:
+            min_port += 1
+    raise IOError("no free ports")
+
 
 @routes.get("/get_ws")
 async def dequeue_instance(request):
     try:
         server_info = SERVER_INSTANCES.get(block=False)
         assert server_info.pid is Undefined
-        server_info = run_server_instance(
-            port=server_info.port,
-            start_server=FeatureConfig.ON_GAME_SERVER_RESTART.enabled,
+        server_info = await run_server_instance(
+            should_start_server=FeatureConfig.ON_GAME_SERVER_RESTART.enabled,
         )
         logging.info(f"issued {server_info}: {psutil.Process(server_info.pid)}")
         return web.json_response(server_info.to_json())
@@ -82,36 +97,45 @@ def get_socket_url(port: int) -> WSUrl:
     return f"ws://0.0.0.0:{port}/gameServer"
 
 
-def run_server_instance(port: int, start_server: bool) -> ServerInstanceInfo:
-    launch_server = [
-        "dotnet",
-        "VSharp.ML.GameServer.Runner.dll",
-        "--mode",
-        "server",
-        "--port",
-    ]
-    ws_url = get_socket_url(port)
-    if not start_server:
-        return ServerInstanceInfo(port, ws_url, pid=Undefined)
+async def run_server_instance(should_start_server: bool) -> ServerInstanceInfo:
+    async with avoid_same_free_port_lock:
+        launch_server = [
+            "dotnet",
+            "VSharp.ML.GameServer.Runner.dll",
+            "--mode",
+            "server",
+            "--port",
+        ]
+        if not should_start_server:
+            return ServerInstanceInfo(0, "None", pid=Undefined)
 
-    proc = subprocess.Popen(
-        launch_server + [str(port)],
-        stdout=subprocess.PIPE,
-        start_new_session=True,
-        cwd=SERVER_WORKING_DIR,
-    )
+        def start_server() -> tuple[subprocess.Popen[bytes], int]:
+            port = next_free_port()
+            proc = subprocess.Popen(
+                launch_server + [str(port)],
+                stdout=subprocess.PIPE,
+                start_new_session=True,
+                cwd=SERVER_WORKING_DIR,
+            )
+            logging.info(f"bash exec cmd: {' '.join(launch_server + [str(port)])}")
+            _ = proc.stdout.readline()
+            proc_out = proc.stdout.readline()
 
-    while True:
-        out = proc.stdout.readline()
-        if out and "Smooth!" in out.decode("utf-8"):
-            print(out.decode("utf-8"), end="")
-            break
+            return proc, port, proc_out
+
+    async with avoid_same_free_port_lock:
+        proc, port, proc_out = start_server()
+
+        while FAILED_TO_INSTANTIATE_ERROR in proc_out.decode("utf-8"):
+            logging.warning(
+                f"{port=} was already in use, caught {proc_out}, trying new port..."
+            )
+            proc, port, proc_out = start_server()
 
     server_pid = proc.pid
     PROCS.append(server_pid)
     logging.info(
         f"running new instance on {port=} with {server_pid=}:"
-        + f"{server_pid}: "
         + " ".join(launch_server + [str(port)])
     )
 
@@ -119,13 +143,16 @@ def run_server_instance(port: int, start_server: bool) -> ServerInstanceInfo:
     return ServerInstanceInfo(port, ws_url, server_pid)
 
 
-def run_servers(num_inst: int, start_port: int) -> list[ServerInstanceInfo]:
-    servers_info = []
-    for i in range(num_inst):
-        server_info = run_server_instance(start_port + i, False)
-        servers_info.append(server_info)
+async def run_servers(num_inst: int) -> list[ServerInstanceInfo]:
+    servers_start_tasks = []
 
-    return servers_info
+    async def run():
+        server_info = await run_server_instance(should_start_server=False)
+        servers_start_tasks.append(server_info)
+
+    await asyncio.gather(*[run() for _ in range(num_inst)])
+
+    return servers_start_tasks
 
 
 def kill_server(server_instance: ServerInstanceInfo):
@@ -156,10 +183,8 @@ def kill_process(pid: int):
 @contextmanager
 def server_manager(server_queue: Queue[ServerInstanceInfo]):
     global PROCS
-    servers_info = run_servers(
-        num_inst=GeneralConfig.SERVER_COUNT,
-        start_port=ServerConfig.VSHARP_INSTANCES_START_PORT,
-    )
+
+    servers_info = asyncio.run(run_servers(GeneralConfig.SERVER_COUNT))
 
     for server_info in servers_info:
         server_queue.put(server_info)
@@ -173,12 +198,6 @@ def server_manager(server_queue: Queue[ServerInstanceInfo]):
 
 def main():
     global SERVER_INSTANCES, PROCS, RESULTS
-    parser = argparse.ArgumentParser(description="V# instances launcher")
-    parser.add_argument(
-        "--debug",
-        action=argparse.BooleanOptionalAction,
-        help="dont launch servers if set",
-    )
 
     # Queue[ServerInstanceInfo]
     SERVER_INSTANCES = Queue()
