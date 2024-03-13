@@ -16,37 +16,35 @@ from func_timeout import FunctionTimedOut, func_set_timeout
 from learning.timer.resources_manager import manage_map_inference_times_array
 from learning.timer.stats import compute_statistics
 from learning.timer.utils import get_map_inference_times
-from ml.data_loader_compact import ServerDataloaderHeteroVector
+from ml.dataset import convert_input_to_tensor
 from ml.fileop import save_model
 from ml.model_wrappers.protocols import Predictor
+from ml.training.dataset import TrainingDataset
 
 TimeDuration: TypeAlias = float
 
 
 def play_map(
-    with_connector: Connector, with_predictor: Predictor, with_dataset
+    with_connector: Connector, with_predictor: Predictor, with_dataset: TrainingDataset
 ) -> tuple[GameResult, TimeDuration]:
     steps_count = 0
     game_state = None
     actual_coverage = None
-    steps = with_connector.steps
+    steps = with_connector.map.StepsToPlay
 
     start_time = perf_counter()
 
     map_steps = []
 
     def add_single_step(input, output):
-        hetero_input, _ = ServerDataloaderHeteroVector.convert_input_to_tensor(input)
+        hetero_input, _ = convert_input_to_tensor(input)
         hetero_input["y_true"] = output
-        hetero_input.to(GeneralConfig.DEVICE)
         map_steps.append(hetero_input)
 
     try:
-        for _ in range(steps):
+        for _ in range(with_connector.map.StepsToPlay):
             game_state = with_connector.recv_state_or_throw_gameover()
-            predicted_state_id, nn_output = with_predictor.predict(
-                game_state, with_connector.map.MapName
-            )
+            predicted_state_id, nn_output = with_predictor.predict(game_state)
 
             add_single_step(game_state, nn_output)
 
@@ -98,10 +96,11 @@ def play_map(
         map_result = (
             model_result.actual_coverage_percent,
             -model_result.tests_count,
-            model_result.errors_count,
             -model_result.steps_count,
+            model_result.errors_count,
         )
         with_dataset.update(with_connector.map.MapName, map_result, map_steps)
+    del map_steps
     return model_result, end_time - start_time
 
 
@@ -136,53 +135,42 @@ def play_game(
     with_predictor: Predictor,
     max_steps: int,
     maps: list[GameMap],
-    dataset_base_path: str,
-    with_dataset=None,
+    with_dataset: TrainingDataset,
 ):
-    # random.shuffle(maps)
-    with tqdm.tqdm(
-        total=len(maps),
-        desc=f"{with_predictor.name():20}",
-        **TQDM_FORMAT_DICT,
-    ) as pbar:
-        list_of_map2result: list[Map2Result] = []
-        for game_map in maps:
-            game_map.AssemblyFullName = os.path.join(
-                dataset_base_path, game_map.AssemblyFullName
+    list_of_map2result: list[Map2Result] = []
+    for game_map in maps:
+        logging.info(f"<{with_predictor.name()}> is playing {game_map.MapName}")
+
+        try:
+            play_func = (
+                play_map_with_timeout
+                if FeatureConfig.DUMP_BY_TIMEOUT.enabled
+                else play_map_with_stats
             )
+            with game_server_socket_manager() as ws:
+                game_result, time = play_func(
+                    with_connector=Connector(ws, game_map, max_steps),
+                    with_predictor=with_predictor,
+                    with_dataset=with_dataset,
+                )
+            logging.info(
+                f"<{with_predictor.name()}> finished map {game_map.MapName} "
+                f"in {game_result.steps_count} steps, {time} seconds, "
+                f"actual coverage: {game_result.actual_coverage_percent:.2f}"
+            )
+        except FunctionTimedOut as fto:
+            game_result, time = (
+                GameResult(0, 0, 0, 0),
+                FeatureConfig.DUMP_BY_TIMEOUT.timeout_sec,
+            )
+            logging.warning(
+                f"<{with_predictor.name()}> timeouted on map {game_map.MapName} with {fto.timedOutAfter}s"
+            )
+            save_model(
+                with_predictor.model(),
+                to=FeatureConfig.DUMP_BY_TIMEOUT.save_path
+                / f"{with_predictor.name()}.pth",
+            )
+        list_of_map2result.append(Map2Result(game_map, game_result))
 
-            logging.info(f"<{with_predictor.name()}> is playing {game_map.MapName}")
-
-            try:
-                play_func = (
-                    play_map_with_timeout
-                    if FeatureConfig.DUMP_BY_TIMEOUT.enabled
-                    else play_map_with_stats
-                )
-                with game_server_socket_manager() as ws:
-                    game_result, time = play_func(
-                        with_connector=Connector(ws, game_map, max_steps),
-                        with_predictor=with_predictor,
-                        with_dataset=with_dataset,
-                    )
-                logging.info(
-                    f"<{with_predictor.name()}> finished map {game_map.MapName} "
-                    f"in {game_result.steps_count} steps, {time} seconds, "
-                    f"actual coverage: {game_result.actual_coverage_percent:.2f}"
-                )
-            except FunctionTimedOut as fto:
-                game_result, time = (
-                    GameResult(0, 0, 0, 0),
-                    FeatureConfig.DUMP_BY_TIMEOUT.timeout_sec,
-                )
-                logging.warning(
-                    f"<{with_predictor.name()}> timeouted on map {game_map.MapName} with {fto.timedOutAfter}s"
-                )
-                save_model(
-                    with_predictor.model(),
-                    to=FeatureConfig.DUMP_BY_TIMEOUT.save_path
-                    / f"{with_predictor.name()}.pth",
-                )
-            list_of_map2result.append(Map2Result(game_map, game_result))
-            pbar.update(1)
-    return (list_of_map2result, with_dataset.maps_data)
+    return list_of_map2result

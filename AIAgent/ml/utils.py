@@ -14,7 +14,7 @@ from config import GeneralConfig
 
 
 def load_model(path: Path, model: torch.nn.Module):
-    model.load_state_dict(torch.load(path))
+    # model.load_state_dict(torch.load(path))
     model.eval()
     return model
 

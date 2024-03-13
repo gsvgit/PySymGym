@@ -21,12 +21,12 @@ def predict_state_with_dict(
         out = model(
             data.x_dict["game_vertex"],
             data.x_dict["state_vertex"],
-            data.edge_index_dict["game_vertex_to_game_vertex"],
-            data["game_vertex_to_game_vertex"].edge_type,
-            data["game_vertex_history_state_vertex"].edge_index,
-            data["game_vertex_history_state_vertex"].edge_attr,
-            data["game_vertex_in_state_vertex"].edge_index,
-            data["state_vertex_parent_of_state_vertex"].edge_index,
+            data.edge_index_dict["game_vertex", "to", "game_vertex"],
+            data["game_vertex", "to", "game_vertex"].edge_type,
+            data["game_vertex", "history", "state_vertex"].edge_index,
+            data["game_vertex", "history", "state_vertex"].edge_attr,
+            data["game_vertex", "in", "state_vertex"].edge_index,
+            data["state_vertex", "parent_of", "state_vertex"].edge_index,
         )
 
     remapped = []

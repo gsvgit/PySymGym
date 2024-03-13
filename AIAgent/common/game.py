@@ -20,10 +20,10 @@ class State:
     VisitedAgainVertices: int
     VisitedNotCoveredVerticesInZone: int
     VisitedNotCoveredVerticesOutOfZone: int
-    StepWhenMovedLastTime: int
-    InstructionsVisitedInCurrentBlock: int
     History: list[StateHistoryElem]
     Children: list[int]
+    StepWhenMovedLastTime: int
+    InstructionsVisitedInCurrentBlock: int
 
     def __hash__(self) -> int:
         return self.Id.__hash__()

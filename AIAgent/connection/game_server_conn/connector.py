@@ -114,10 +114,10 @@ class Connector:
     def _process_reward_server_message(self, msg):
         match msg.MessageType:
             case ServerMessageType.INCORRECT_PREDICTED_STATEID:
-                raise Connector.IncorrectSentStateError(
-                    f"Sending state_id={self._sent_state_id} "
-                    f"at step #{self._current_step} resulted in {msg.MessageType}"
+                logging.error(
+                    f"Sending state_id={self._sent_state_id} for map {self.map.MapName} at step #{self._current_step} resulted in {msg.MessageType}"
                 )
+                return msg.MessageBody
 
             case ServerMessageType.MOVE_REVARD:
                 self._current_step += 1

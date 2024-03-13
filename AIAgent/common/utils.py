@@ -18,6 +18,6 @@ def invert_mapping_mrgm_gmmr(
         for map_result_mapping in list_of_map_result_mappings:
             map, result = (map_result_mapping.map, map_result_mapping.game_result)
 
-            inverse_mapping[map].append(Agent2Result(named_agent, result))
+            inverse_mapping[map.MapName].append(Agent2Result(named_agent, result))
 
     return inverse_mapping

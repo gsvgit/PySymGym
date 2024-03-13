@@ -50,15 +50,15 @@ def create_pivot_table(
         model_map_results_mapping
     )
 
-    name_results_dict: defaultdict[int, list[Name2ResultViewModel]] = defaultdict(list)
-    epoch_percents_dict: defaultdict[int, list[Name2ResultViewModel]] = defaultdict(
+    name_results_dict: defaultdict[str, list[Name2ResultViewModel]] = defaultdict(list)
+    epoch_percents_dict: defaultdict[str, list[Name2ResultViewModel]] = defaultdict(
         list
     )
 
-    for map_obj, mutable2result_list in map_results_with_models.items():
+    for mapName, mutable2result_list in map_results_with_models.items():
         for mutable2result in mutable2result_list:
-            name_results_dict[map_obj.Id].append(convert_to_view_model(mutable2result))
-            epoch_percents_dict[map_obj.Id].append(
+            name_results_dict[mapName].append(convert_to_view_model(mutable2result))
+            epoch_percents_dict[mapName].append(
                 str(
                     (
                         mutable2result.game_result.actual_coverage_percent,
@@ -75,12 +75,6 @@ def create_pivot_table(
     for col in df:
         df[col] = df[col].map(lambda name2result_vm: name2result_vm.pretty_result)
 
-    maps_indexes = dict(
-        {(map_obj.Id, map_obj.MapName) for map_obj in map_results_with_models.keys()}
-    )
-
-    df.rename(columns=lambda map_id: maps_indexes[map_id], inplace=True)
-    epochs_percent_df.rename(columns=lambda map_id: maps_indexes[map_id], inplace=True)
     df[EUC_DIST2FULL_COV_COL_NAME] = euc_dists2full_cov
     df[AV_COVERAGE_COL_NAME] = avs
     df[MEDIAN_COVERAGE_COL_NAME] = medians
