@@ -1,4 +1,4 @@
-name: Build and Launch C# Project
+name: Build and Launch C# Project + Run training
 
 on: [pull_request]
 
@@ -6,10 +6,20 @@ jobs:
   build-and-launch:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11.8'
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: true
+
+      - name: Install dependencies
+        working-directory: ./
+        run: |
+          pip install -r requirements.txt
 
       - name: Build V# game server
         working-directory: ./GameServers/VSharp/
@@ -24,9 +34,21 @@ jobs:
       - name: Generate initial data for training
         working-directory: ./GameServers/VSharp/VSharp.ML.GameServer.Runner/bin/Release/net7.0
         run: |
-          dotnet VSharp.ML.GameServer.Runner.dll --mode generator --datasetbasepath ../../../../../../maps/DotNet/Maps/Root/bin/Release/net7.0 --datasetdescription ../../../../../../maps/DotNet/Maps/dataset_for_tests.json --stepstoserialize 200
+          dotnet VSharp.ML.GameServer.Runner.dll --mode generator --datasetbasepath ../../../../../../maps/DotNet/Maps/Root/bin/Release/net7.0 --datasetdescription ../../../../../../workflow/dataset_for_tests.json --stepstoserialize 200
+
+      - name: Move SerializedEpisodes
+        working-directory: ./AIAgent
+        run: |
+          mkdir report
+          mv ../GameServers/VSharp/VSharp.ML.GameServer.Runner/bin/Release/net7.0/8100/SerializedEpisodes/ report/
 
       - name: Launch application
+        working-directory: ./AIAgent
         run: |
-          python3 -h
-        #   dotnet launch
+          python3 launch_servers.py &
+          echo "Waiting for server to start..." && sleep 10
+
+      - name: Run training
+        working-directory: ./AIAgent
+        run: |
+          python3 run_training.py --config ../workflow/config_for_tests.ini

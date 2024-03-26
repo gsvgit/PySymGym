@@ -162,4 +162,4 @@ cython_debug/
 
 # MacOS specific
 .DS_Store
-AIAgent/report/
+*report/

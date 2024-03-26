@@ -13,7 +13,9 @@ def acquire_instance() -> ServerInstanceInfo:
     if response.status != 200:
         logging.error(f"{response.status} with {content=} on acquire_instance call")
         raise RuntimeError(f"Not ok response: {response}, {content}")
-    acquired_instance = ServerInstanceInfo.from_json(json.loads(content.decode("utf-8")))
+    acquired_instance = ServerInstanceInfo.from_json(
+        json.loads(content.decode("utf-8"))
+    )
     logging.info(f"acquired ws: {acquired_instance}")
     return acquired_instance
 

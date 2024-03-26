@@ -1,5 +1,4 @@
 import multiprocessing as mp
-import os
 from pathlib import Path
 import numpy as np
 import torch

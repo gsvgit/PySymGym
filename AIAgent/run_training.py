@@ -1,24 +1,24 @@
 import argparse
+import configparser
 import json
 import logging
+import multiprocessing as mp
 import os
 from datetime import datetime
 from functools import partial
+from pathlib import Path
+
 import joblib
 import optuna
-import multiprocessing as mp
+import torch
 from common.game import GameMap
 from config import GeneralConfig
-from ml.training.dataset import TrainingDataset
-from ml.training.paths import (
-    PROCESSED_DATASET_PATH,
-    TRAINING_RESULTS_PATH,
-    RAW_DATASET_PATH,
-    LOG_PATH,
+from ml.models.RGCNEdgeTypeTAG3VerticesDoubleHistory2.model_modified import (
+    StateModelEncoderLastLayer,
 )
-from ml.training.utils import create_folders_if_necessary
-from ml.training.training import train
-
+from ml.training.paths import LOG_PATH, PROCESSED_DATASET_PATH, TRAINING_RESULTS_PATH
+from ml.training.training import TrialSettings, train
+from ml.training.utils import create_folders_if_necessary, get_model
 
 logging.basicConfig(
     level=GeneralConfig.LOGGER_LEVEL,
@@ -31,35 +31,30 @@ create_folders_if_necessary([TRAINING_RESULTS_PATH, PROCESSED_DATASET_PATH])
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Train a model using configuration from a .ini file."
+    )
 
     parser.add_argument(
-        "--datasetdescription",
-        type=str,
-        help="full paths to JSON-file with dataset description",
-        required=True,
+        "--config", type=str, help="Path to the configuration file", required=True
     )
-    parser.add_argument(
-        "--datasetbasepath",
-        type=str,
-        help="path to dir with explored dlls",
-        required=True,
-    )
-    parser.add_argument(
-        "--generatedataset",
-        type=bool,
-        help="set this flag if dataset generation is needed",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-    )
+
     args = parser.parse_args()
-    dataset_base_path = args.datasetbasepath
 
+    config = configparser.ConfigParser()
+    config.read(args.config)
+
+    dataset_base_path = Path(config["DatasetConfig"]["dataset_base_path"]).resolve()
+    dataset_description = Path(config["DatasetConfig"]["dataset_description"]).resolve()
+    n_startup_trials = config.getint("OptunaConfig", "n_startup_trials")
+    n_trials = config.getint("OptunaConfig", "n_trials")
+    num_epochs = config.getint("TrainConfig", "epochs")
+    path_to_weights = config.get("TrainConfig", "path_to_weights", fallback=None)
     print(GeneralConfig.DEVICE)
 
     dbg_dict = {}
 
-    with open(args.datasetdescription, "r") as maps_json:
+    with open(dataset_description, "r") as maps_json:
         maps = GameMap.schema().load(json.loads(maps_json.read()), many=True)
         for map in maps:
             if map.MapName in dbg_dict:
@@ -69,10 +64,32 @@ def main():
             map.AssemblyFullName = fullName
 
     mp.set_start_method("spawn", force=True)
-    sampler = optuna.samplers.TPESampler(n_startup_trials=10)
+    sampler = optuna.samplers.TPESampler(n_startup_trials=n_startup_trials)
     study = optuna.create_study(sampler=sampler, direction="maximize")
-    objective = partial(train, maps=maps)
-    study.optimize(objective, n_trials=100)
+
+    if path_to_weights is not None:
+        model = get_model(
+            Path(path_to_weights).resolve(),
+            lambda: StateModelEncoderLastLayer(hidden_channels=64, out_channels=8),
+        )
+    else:
+        model = StateModelEncoderLastLayer(hidden_channels=64, out_channels=8)
+    model.to(GeneralConfig.DEVICE)
+
+    def init_trial_settings(trial: optuna.trial.Trial):
+        return TrialSettings(
+            lr=trial.suggest_float("lr", 1e-7, 1e-3),
+            batch_size=trial.suggest_int("batch_size", 32, 1024),
+            epochs=num_epochs,
+            optimizer=trial.suggest_categorical("optimizer", [torch.optim.Adam]),
+            loss=trial.suggest_categorical("loss", [torch.nn.KLDivLoss]),
+            random_seed=937,
+        )
+
+    objective = partial(
+        train, maps=maps, init_trial_settings=init_trial_settings, model=model
+    )
+    study.optimize(objective, n_trials=n_trials)
     joblib.dump(study, f"{datetime.fromtimestamp(datetime.now().timestamp())}.pkl")
 
 

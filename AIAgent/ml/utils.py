@@ -1,6 +1,5 @@
 import copy
 import random
-from pathlib import Path
 from typing import OrderedDict
 
 import numpy
@@ -11,12 +10,6 @@ from torch import nn
 
 from common.constants import BASE_NN_OUT_FEATURES_NUM
 from config import GeneralConfig
-
-
-def load_model(path: Path, model: torch.nn.Module):
-    # model.load_state_dict(torch.load(path))
-    model.eval()
-    return model
 
 
 def convert_to_export(
