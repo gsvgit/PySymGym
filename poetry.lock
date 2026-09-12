@@ -1921,32 +1921,32 @@ dev = ["absl-py", "pyink", "pylint (>=2.6.0)", "pytest", "pytest-xdist"]
 
 [[package]]
 name = "mlflow"
-version = "3.11.1"
+version = "3.13.0"
 description = "MLflow is an open source platform for the complete machine learning lifecycle"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "mlflow-3.11.1-py3-none-any.whl", hash = "sha256:8f6bf1238ac04f97664c229dd480380c5c254a78bdb3c0e433e3a0397508b1af"},
-    {file = "mlflow-3.11.1.tar.gz", hash = "sha256:84e54c4be91b5b2a19039a2673fe688b1d7307ceddacc08af51f8df05b19ee56"},
+    {file = "mlflow-3.13.0-py3-none-any.whl", hash = "sha256:7ca9cb2f623f300dabadaf5e985c85af77c5db3d7c36f56769d22c101b132f6c"},
+    {file = "mlflow-3.13.0.tar.gz", hash = "sha256:a95198d592a8a15fad3db7f56b228acc9422c09f0daa7c6c976a9996ab73c3e2"},
 ]
 
 [package.dependencies]
 aiohttp = "<4"
 alembic = "<1.10.0 || >1.10.0,<2"
-cryptography = ">=43.0.0,<47"
+cryptography = ">=43.0.0,<49"
 docker = ">=4.0.0,<8"
 Flask = "<4"
 Flask-CORS = "<7"
 graphene = "<4"
-gunicorn = {version = "<26", markers = "platform_system != \"Windows\""}
-huey = ">=2.5.4,<3"
+gunicorn = {version = "<27", markers = "platform_system != \"Windows\""}
+huey = ">=2.5.4,<4"
 matplotlib = "<4"
-mlflow-skinny = "3.11.1"
-mlflow-tracing = "3.11.1"
+mlflow-skinny = "3.13.0"
+mlflow-tracing = "3.13.0"
 numpy = "<3"
 pandas = "<3"
-pyarrow = ">=4.0.0,<24"
+pyarrow = ">=4.0.0,<25"
 scikit-learn = "<2"
 scipy = "<2"
 skops = "<1"
@@ -1964,21 +1964,20 @@ gateway = ["boto3 (>=1.28.56,<2)", "fastapi (<1)", "slowapi (>=0.1.9,<1)", "tikt
 genai = ["boto3 (>=1.28.56,<2)", "fastapi (<1)", "slowapi (>=0.1.9,<1)", "tiktoken (<1)", "uvicorn[standard] (<1)", "watchfiles (<2)"]
 jfrog = ["mlflow-jfrog-plugin"]
 kubernetes = ["kubernetes"]
-langchain = ["langchain (>=0.3.21,<=1.2.12)"]
-mcp = ["click (!=8.3.0)", "fastmcp (>=2.0.0,<3)"]
-mlserver = ["mlserver (>=1.2.0,!=1.3.1,<2.0.0)", "mlserver-mlflow (>=1.2.0,!=1.3.1,<2.0.0)"]
+langchain = ["langchain (>=0.3.26,<=1.3.0)"]
+mcp = ["click (!=8.3.0)", "fastmcp (>=2.0.0,<4)"]
 sqlserver = ["mlflow-dbstore"]
 
 [[package]]
 name = "mlflow-skinny"
-version = "3.11.1"
+version = "3.13.0"
 description = "MLflow is an open source platform for the complete machine learning lifecycle"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "mlflow_skinny-3.11.1-py3-none-any.whl", hash = "sha256:82ffd5f6980320b4ac19f741e7a754faa1d01707e632b002ea68e04fd25a0535"},
-    {file = "mlflow_skinny-3.11.1.tar.gz", hash = "sha256:86ce63491349f6713afc8a4ef0bf77a8314d0e79e03753cb150d6c860a0b0475"},
+    {file = "mlflow_skinny-3.13.0-py3-none-any.whl", hash = "sha256:ced3d9a580564fae093d14732df8531fb180574f6483d4c642b6083879eb86fc"},
+    {file = "mlflow_skinny-3.13.0.tar.gz", hash = "sha256:d2273bfa21f776359f7d6ab2267967e3a6732a5fb00996ad433d0e777dfa3b71"},
 ]
 
 [package.dependencies]
@@ -1988,7 +1987,7 @@ cloudpickle = "<4"
 databricks-sdk = ">=0.20.0,<1"
 fastapi = "<1"
 gitpython = ">=3.1.9,<4"
-importlib_metadata = ">=3.7.0,<4.7.0 || >4.7.0,<9"
+importlib_metadata = ">=3.7.0,<4.7.0 || >4.7.0,<10"
 opentelemetry-api = ">=1.9.0,<3"
 opentelemetry-proto = ">=1.9.0,<3"
 opentelemetry-sdk = ">=1.9.0,<3"
@@ -1999,6 +1998,7 @@ python-dotenv = ">=0.19.0,<2"
 pyyaml = ">=5.1,<7"
 requests = ">=2.17.3,<3"
 sqlparse = ">=0.4.0,<1"
+starlette = "<2"
 typing-extensions = ">=4.0.0,<5"
 uvicorn = "<1"
 
@@ -2013,21 +2013,20 @@ gateway = ["boto3 (>=1.28.56,<2)", "fastapi (<1)", "slowapi (>=0.1.9,<1)", "tikt
 genai = ["boto3 (>=1.28.56,<2)", "fastapi (<1)", "slowapi (>=0.1.9,<1)", "tiktoken (<1)", "uvicorn[standard] (<1)", "watchfiles (<2)"]
 jfrog = ["mlflow-jfrog-plugin"]
 kubernetes = ["kubernetes"]
-langchain = ["langchain (>=0.3.21,<=1.2.12)"]
-mcp = ["click (!=8.3.0)", "fastmcp (>=2.0.0,<3)"]
-mlserver = ["mlserver (>=1.2.0,!=1.3.1,<2.0.0)", "mlserver-mlflow (>=1.2.0,!=1.3.1,<2.0.0)"]
+langchain = ["langchain (>=0.3.26,<=1.3.0)"]
+mcp = ["click (!=8.3.0)", "fastmcp (>=2.0.0,<4)"]
 sqlserver = ["mlflow-dbstore"]
 
 [[package]]
 name = "mlflow-tracing"
-version = "3.11.1"
+version = "3.13.0"
 description = "MLflow Tracing SDK is an open-source, lightweight Python package that only includes the minimum set of dependencies and functionality to instrument your code/models/agents with MLflow Tracing."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "mlflow_tracing-3.11.1-py3-none-any.whl", hash = "sha256:fa82df64dacf8293b714ae666440fe7c1902c6470c024df389bb91e9de3106d9"},
-    {file = "mlflow_tracing-3.11.1.tar.gz", hash = "sha256:cb63cee16385d081467ec5bee4807fe1af59ddfdf04be4c79e7a7813b1002193"},
+    {file = "mlflow_tracing-3.13.0-py3-none-any.whl", hash = "sha256:2f8187ce2b1af7419be71d2d8ab5fec53d207d4b8d703cd15e5db64939098d72"},
+    {file = "mlflow_tracing-3.13.0.tar.gz", hash = "sha256:42c435b0fdcab00f1865cab4a52f7a85a2a08d68a959f36bcf90a1c9fe65db0a"},
 ]
 
 [package.dependencies]
